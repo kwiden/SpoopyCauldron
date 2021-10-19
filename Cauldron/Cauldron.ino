@@ -15,10 +15,8 @@ PulsePositionOutput h_fan2(FALLING);
 byte drawingMemory[241*3];         //  3 bytes per LED
 DMAMEM byte displayMemory[241*12]; // 12 bytes per LED
 
-uint8_t ring_size[] = {60, 48, 40, 32, 24, 16, 12, 8, 1};
-uint8_t ring_offset[9];
-
 light* leds_[241];
+uint8_t quad = 0;
 
 
 WS2812Serial leds(241, displayMemory, drawingMemory, 1, WS2812_GRB);
@@ -31,11 +29,7 @@ void setup() {
 		leds_[i] = new light(i);
 	}
 
-	ring_offset[0] = 0;
-	for(int i=1; i<9; i++)
-	{
-		ring_offset[i] = ring_offset[i-1] + ring_size[i-1];
-	}
+	leds_[0]->init();
 
 	leds.begin();
 		
@@ -60,8 +54,11 @@ void setup() {
 	delay(500);
 	//v_fan1.write(93);
 
+	Serial.println("Begin");
+
 }
 static uint16_t j = 0;
+static uint16_t k = 0;
 static uint8_t fan = 0;
 static uint16_t timer = 1000;
 static uint32_t color = 170;
@@ -148,7 +145,7 @@ void LEDs() {
 		leds.setPixel(i, tmp);
 	}
 	j++;
-	if(j%25 == 0 && num_leds < 5)
+	if(j%25 == 0 && num_leds < 10)
 	{
 			if(j%3)
 			{
@@ -158,11 +155,31 @@ void LEDs() {
 			{
 				color -= random(8);
 			}
-		  leds_[random(241)]->set(Wheel(color));
+		/*	if(j%4==1)
+			{
+				uint8_t partner = leds_[random(241)]->set_fast(Wheel(color));
+		  	leds_[partner]->set_fast(Wheel(color));
+			}*/
+			//else
+			{
+				uint8_t led;
+				if(quad == 5) 
+					{
+						led = 241;
+						quad = 0;
+					}
+				else
+					led = quad_to_i(quad, k++/*random(60)*/);
+				uint8_t partner = leds_[led]->set(Wheel(color));
+		  	leds_[partner]->set(Wheel(color));
+		  	quad ++;
+		  	if(k>241) k = 0;
+			}
+		  
 	}
 	leds.show();
 }
-
+/*
 void color_loop(int loop, int color)
 {
 	uint8_t offset = ring_offset[loop];
@@ -178,7 +195,7 @@ void setPixel(uint8_t loop, uint8_t idx, uint32_t color)
 {
 	uint8_t offset = ring_offset[loop];
 	leds.setPixel(idx+offset, color);
-}
+}*/
 
 // Input a value 0 to 255 to get a color value.
 // The colours are a transition r - g - b - back to r.
@@ -195,11 +212,11 @@ uint32_t Wheel(byte WheelPos) {
   WheelPos -= 170;
   return ((WheelPos * 3)/dim<< 16 | (255 - WheelPos * 3)/dim<<8 |  0);
 }
-
+/*
 void colorWipe(int color, int wait) {
 	for (int i=0; i < 241; i++) {
 		leds.setPixel(i, color);
 		//leds.show();
 		//delayMicroseconds(wait);
 	}
-}
+}*/

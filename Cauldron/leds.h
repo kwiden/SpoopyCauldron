@@ -1,4 +1,5 @@
 #include <WS2812Serial.h>
+
 	
 #define red(a) (a>>16 & 0xFF)
 #define green(a) (a>>8 & 0xFF)
@@ -13,9 +14,11 @@ uint8_t quad_size[] = {15, 12, 10,  8,  6,  4,  3, 2, 1};
 uint8_t ring_offset[9];
 uint8_t quad_offset[9];
 
-#define R_UP 1
-#define R_DO 20
-#define F_UP 3
+extern WS2812Serial leds;
+
+#define R_UP 5
+#define R_DO 10
+#define F_UP 15
 #define F_DO 30
 
 uint8_t quad_to_i(uint8_t quad, uint8_t ix)
@@ -31,6 +34,18 @@ uint8_t quad_to_i(uint8_t quad, uint8_t ix)
 
 }
 
+void color_loop(int loop, int color)
+{
+	if(loop>9) return;
+	uint8_t offset = ring_offset[loop];
+	for(int i=0; i < ring_size[loop]; i++)
+	{
+		leds.setPixel(i+offset, color);
+	}
+	leds.show();
+
+}
+
 class light{
 	public:
 			uint32_t val = 0;
@@ -39,6 +54,9 @@ class light{
 			uint8_t partner;
 			uint32_t ramp_up = 1;
 			uint32_t ramp_down = 20;
+			float red;
+			float green;
+			float blue;
 			bool is_rising = false;
 			bool is_falling = false;
 
@@ -47,7 +65,7 @@ class light{
 		idx = _idx;
 		if(_idx >= 241) partner = 240;
 		else partner = _idx;
-			/*if(idx > ring_offset[8])
+			if(idx > ring_offset[8])
 			{
 				partner = idx - 1;
 				return;
@@ -60,7 +78,7 @@ class light{
 					return;
 				}
 
-			}*/
+			}
 	}
 
 	void init()
@@ -76,7 +94,11 @@ class light{
 
 	uint8_t set(uint32_t color)
 	{
+		uint8_t ramp = rand();
 		tgt = color;
+		red = red(color);
+		green = green(color);
+		blue = blue(color);
 		is_rising = true;
 		ramp_up = R_UP;
 		ramp_down = R_DO;
@@ -125,9 +147,9 @@ class light{
 		{
 			int8_t	r_tmp, g_tmp, b_tmp;
 			
-			r_tmp = (red(val) > (ramp_down)) ? red(val) - (ramp_down): 0;
-			g_tmp = (green(val) > (ramp_down)) ? green(val) - (ramp_down): 0;
-			b_tmp = (blue(val) > (ramp_down)) ? blue(val) - (ramp_down): 0;
+			r_tmp = (red(val) >= (ramp_down)) ? red(val) - (ramp_down): 0;
+			g_tmp = (green(val) >= (ramp_down)) ? green(val) - (ramp_down): 0;
+			b_tmp = (blue(val) >= (ramp_down)) ? blue(val) - (ramp_down): 0;
 			val = red_(r_tmp) | green_(g_tmp) | blue_(b_tmp);
 			
 			if(r_tmp == red(tgt) && g_tmp == green(tgt) && b_tmp == blue(tgt))

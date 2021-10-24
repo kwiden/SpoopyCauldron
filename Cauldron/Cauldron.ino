@@ -131,7 +131,7 @@ void loop() {
 		}
 	}
 
-	delay(100);
+	delay(50);
 }
 
 
@@ -145,15 +145,15 @@ void LEDs() {
 		leds.setPixel(i, tmp);
 	}
 	j++;
-	if(j%25 == 0 && num_leds < 10)
+	if(j%25 == 0 && num_leds < 5)
 	{
 			if(j%3)
 			{
-				color += random(10);
+				color += random(5);
 			}
 			else
 			{
-				color -= random(8);
+				color -= random(3);
 			}
 		/*	if(j%4==1)
 			{
@@ -162,18 +162,13 @@ void LEDs() {
 			}*/
 			//else
 			{
-				uint8_t led;
-				if(quad == 5) 
-					{
-						led = 241;
-						quad = 0;
-					}
-				else
-					led = quad_to_i(quad, k++/*random(60)*/);
+				uint8_t led = quad_to_i(quad, random(60));
+				Serial.println(led);
 				uint8_t partner = leds_[led]->set(Wheel(color));
 		  	leds_[partner]->set(Wheel(color));
 		  	quad ++;
-		  	if(k>241) k = 0;
+		  	if(quad > 4) quad = 0;
+		  //	if(k>241) k = 0;
 			}
 		  
 	}
